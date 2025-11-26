@@ -36,17 +36,18 @@ You can run the following examples:
   - `show_line_selector` presents the user a multiple-choice question using a widget.
   - Route-planning replies attach entity sources for the stations in the suggested path as annotations.
 
-### Client tool calls that mutate UI state
+### Client tool calls that mutate or fetch UI state
+
+- **Metro Map**:
+  - Client tool `get_selected_stations` pulls the currently selected nodes from the canvas so the agent can use client-side state in its response ([ChatKitPanel.tsx](examples/metro-map/frontend/src/components/ChatKitPanel.tsx), [metro_map_agent.py](examples/metro-map/backend/app/agents/metro_map_agent.py)).
+
+### Fire-and-forget client effects
 
 - **Cat Lounge**:
-  - Client tool `update_cat_status` is invoked by server tools `feed_cat`, `play_with_cat`, `clean_cat`, and `speak_as_cat` to sync UI state.
-  - When invoked, it is handled client-side with the `handleClientToolCall` callback in [ChatKitPanel.tsx](examples/cat-lounge/frontend/src/components/ChatKitPanel.tsx).
-- **News Guide**:
-  - The `open_article` widget action triggers client-side navigation to the selected story and forwards the action back to the server via `sendCustomAction` to follow up with context-aware prompts ([ChatKitPanel.tsx](examples/news-guide/frontend/src/components/ChatKitPanel.tsx)).
+  - Client effects `update_cat_status` and `cat_say` are invoked by server tools to sync UI state and surface speech bubbles; handled via `onEffect` in [ChatKitPanel.tsx](examples/cat-lounge/frontend/src/components/ChatKitPanel.tsx).
 - **Metro Map**:
-  - Client tools `add_station` (sent after the server adds a stop) and `location_select_mode` (sent after a line is chosen) update the metro map canvas ([ChatKitPanel.tsx](examples/metro-map/frontend/src/components/ChatKitPanel.tsx)).
-  - Inference is deliberately skipped after the `location_select_mode` client tool call output is sent to the server; the `respond` method on the server early returns when the last item in the thread is the `location_select_mode` client tool call ([server.py](examples/news-guide/backend/app/server.py)).
-  - The `location_select_mode` client tool call is streamed within the server action handler ([server.py](examples/news-guide/backend/app/server.py)).
+  - Client effect `location_select_mode` is streamed within the server action handler ([server.py](examples/metro-map/backend/app/server.py)) after a line is chosen and updates the metro map canvas ([ChatKitPanel.tsx](examples/metro-map/frontend/src/components/ChatKitPanel.tsx)).
+  - Client effect `add_station` is streamed by the agent after map updates to immediately sync the canvas and focus the newly created stop ([metro_map_agent.py](examples/metro-map/backend/app/agents/metro_map_agent.py), [ChatKitPanel.tsx](examples/metro-map/frontend/src/components/ChatKitPanel.tsx)).
 
 ### Page-aware model responses
 
@@ -60,7 +61,12 @@ You can run the following examples:
   - Retrieval tools stream `ProgressUpdateEvent` messages while searching tags, authors, keywords, exact text, or loading the current page so the UI surfaces “Searching…”/“Loading…” states ([news_agent.py](examples/news-guide/backend/app/agents/news_agent.py)).
   - The event finder emits progress as it scans dates, days of week, or keywords to keep users informed during longer lookups ([event_finder_agent.py](examples/news-guide/backend/app/agents/event_finder_agent.py)).
 - **Metro Map**:
-  - The metro agent emits a quick sync update when it loads the line data via `get_map` ([metro_map_agent.py](examples/metro-map/backend/app/agents/metro_map_agent.py)).
+  - The metro agent emits a progress update while retrieving map information in `get_map`; it also emits a progress update while waiting for a client tool call to complete in `get_selected_stations` ([metro_map_agent.py](examples/metro-map/backend/app/agents/metro_map_agent.py)).
+
+### Response lifecycle UI state
+
+- **Metro Map**:
+  - The client locks map interaction at response start and unlocks when the stream ends so canvas state doesn’t drift during agent updates by adding `onResponseStart` and `onResponseEnd` handlers ([ChatKitPanel.tsx](examples/metro-map/frontend/src/components/ChatKitPanel.tsx)).
 
 ### Widgets without actions
 
@@ -86,7 +92,7 @@ You can run the following examples:
 - **News Guide**:
   - The `view_event_details` action is processed server-side to update the timeline widget with expanded descriptions without a round trip to the model ([server.py](examples/news-guide/backend/app/server.py)).
 - **Metro Map**:
-  - The `line.select` action is handled server-side to stream an updated widget, add a `<LINE_SELECTED>` hidden context item to thread, stream an assistant message to ask the user whether to add the station at the line’s start or end, and trigger the `location_select_mode` client tool call for the UI to sync ([server.py](examples/metro-map/backend/app/server.py)).
+  - The `line.select` action is handled server-side to stream an updated widget, add a `<LINE_SELECTED>` hidden context item to thread, stream an assistant message to ask the user whether to add the station at the line’s start or end, and trigger the `location_select_mode` client effect for the UI to sync ([server.py](examples/metro-map/backend/app/server.py)).
 
 ### Annotations
 
