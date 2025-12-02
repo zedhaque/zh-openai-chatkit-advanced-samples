@@ -17,8 +17,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from ..agents.event_finder_agent import event_finder_agent
 from ..agents.puzzle_agent import puzzle_agent
 from ..data.article_store import ArticleMetadata, ArticleRecord, ArticleStore
-from ..memory_store import MemoryStore
-from ..request_context import RequestContext
 from ..widgets.article_list_widget import build_article_list_widget
 
 logging.basicConfig(level=logging.INFO)
@@ -84,9 +82,7 @@ FEATURED_PAGE_ID = "featured"
 
 class NewsAgentContext(AgentContext):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    store: Annotated[MemoryStore, Field(exclude=True)]
     articles: Annotated[ArticleStore, Field(exclude=True)]
-    request_context: Annotated[RequestContext, Field(exclude=True)]
 
 
 # -- Structured results for tool calls --------------------------------------

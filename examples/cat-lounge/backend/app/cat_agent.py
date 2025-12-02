@@ -17,7 +17,6 @@ from pydantic import ConfigDict, Field, ValidationError
 
 from .cat_state import CatState
 from .cat_store import CatStore
-from .memory_store import MemoryStore
 from .widgets.name_suggestions_widget import CatNameSuggestion, build_name_suggestions_widget
 from .widgets.profile_card_widget import build_profile_card_widget, profile_widget_copy_text
 
@@ -72,9 +71,7 @@ MODEL = "gpt-4.1-mini"
 
 class CatAgentContext(AgentContext):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    store: Annotated[MemoryStore, Field(exclude=True)]
     cats: Annotated[CatStore, Field(exclude=True)]
-    request_context: dict[str, Any]
 
 
 async def _get_state(ctx: RunContextWrapper[CatAgentContext]) -> CatState:

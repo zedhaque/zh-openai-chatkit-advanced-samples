@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-from typing import Annotated
-
 from agents import Agent
 from chatkit.agents import AgentContext
-from pydantic import ConfigDict, Field
-
-from ..memory_store import MemoryStore
-from ..request_context import RequestContext
+from pydantic import ConfigDict
 
 INSTRUCTIONS = """
     You host Foxhollow's Coffee Break Puzzle Corner — a cheerful diversion for readers steeped
@@ -47,8 +42,6 @@ MODEL = "gpt-4.1-mini"
 
 class PuzzleAgentContext(AgentContext):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    store: Annotated[MemoryStore, Field(exclude=True)]
-    request_context: Annotated[RequestContext, Field(exclude=True, default_factory=RequestContext)]
 
 
 puzzle_agent = Agent[PuzzleAgentContext](
